@@ -1,0 +1,43 @@
+{
+    "name": "location-based-motivation",
+    "version": "1.0.0",
+    "description": "Location Based Motivation Dashboard",
+    "main": "index.js",
+    "scripts": {
+        "start": "node server.js",
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start-local": "export MapboxAccessToken='pk.eyJ1IjoiY3dpbGxlMjAxMiIsImEiOiJjajJxdWJyeXEwMDE5MzNydXF2cm1sbDU1In0.kCKIz6Ivh3EfNOmEfTANOA' && webpack-dev-server --progress --hot --port 3000",
+        "build": "export MapboxAccessToken='pk.eyJ1IjoiY3dpbGxlMjAxMiIsImEiOiJjajJxdWJyeXEwMDE5MzNydXF2cm1sbDU1In0.kCKIz6Ivh3EfNOmEfTANOA' && webpack --output-filename bundle.js"
+    },
+    "author": "Christopher Wille",
+    "dependencies": {
+        "body-parser": "^1.18.2",
+        "bootstrap": "4.0.0",
+        "chart.js": "2.7.1",
+        "compression": "^1.7.1",
+        "connect-mongo": "0.8.2",
+        "cors": "^2.8.4",
+        "d3-request": "^1.0.5",
+        "datatables.net-bs4": "1.10.16",
+        "deck.gl": "^5.0.3",
+        "express": "^4.16.2",
+        "i": "^0.3.6",
+        "jquery": "3.3.0",
+        "jquery.easing": "^1.4.1",
+        "luma.gl": "^5.0.0",
+        "mongodb": "2.2.19",
+        "npm": "^5.6.0",
+        "popper.js": "^1.12.9",
+        "rbush": "^2.0.1",
+        "react": "^16.2.0",
+        "react-dom": "^16.2.0",
+        "react-map-gl": "^3.2.0",
+        "xmlhttprequest": "^1.8.0"
+    },
+    "devDependencies": {
+        "browser-sync": "2.23.5",
+        "buble-loader": "^0.4.0",
+        "webpack": "^2.2.0",
+        "webpack-dev-server": "^2.2.0"
+    }
+}
