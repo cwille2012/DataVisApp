@@ -18,7 +18,7 @@ app.use('/', express.static(path.join(__dirname)));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const port = process.env.PORT || 9600;
+const port = process.env.PORT || 3000;
 const environment = process.env.NODE_ENV;
 
 var dbHost = "localhost";
