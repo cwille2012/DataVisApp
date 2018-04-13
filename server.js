@@ -126,7 +126,7 @@ app.post('/locationdata', function(req, res) {
     res.end('ok');
 });
 
-app.post('/newlocation', function(req, res) {
+app.post('/locations', function(req, res) {
     console.log("Received data:");
     console.log(req.body);
 
