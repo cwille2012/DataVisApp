@@ -1,6 +1,9 @@
-/* global window */
 import React, { Component } from 'react';
 import DeckGL, { HexagonLayer } from 'deck.gl';
+import DeckGL, { ScatterplotLayer } from 'deck.gl';
+import DeckGL, { GeoJsonLayer } from 'deck.gl';
+import DeckGL, { LineLayer } from 'deck.gl';
+
 
 const LIGHT_SETTINGS = {
     lightsPosition: [-0.144528, 49.739968, 8000, -3.807751, 54.104682, 8000],
@@ -96,7 +99,7 @@ export default class DeckGLOverlay extends Component {
     }
 
     render() {
-        const { viewport, data, radius, coverage, upperPercentile } = this.props;
+        const { viewport, data, radius, coverage, upperPercentile, polydata } = this.props;
 
         if (!data) {
             return null;
@@ -108,7 +111,7 @@ export default class DeckGLOverlay extends Component {
                 colorRange,
                 coverage,
                 data,
-                elevationRange: [0, 1000],
+                elevationRange: [1, 1000],
                 elevationScale: this.state.elevationScale,
                 extruded: true,
                 getPosition: d => d,
@@ -118,6 +121,49 @@ export default class DeckGLOverlay extends Component {
                 pickable: Boolean(this.props.onHover),
                 radius,
                 upperPercentile
+            }),
+            // new ScatterplotLayer({
+            //     id: 'scatterplot-layer',
+            //     data: [
+            //         { position: [-80.5656, 28.0895], radius: 5, color: [0, 255, 0] },
+            //         { position: [28.0895, -80.5656], radius: 5, color: [0, 255, 0] }
+            //     ],
+            //     radiusScale: 100,
+            // }),
+            // new LineLayer({
+            //     id: 'flight-paths',
+            //     data: flightdata,
+            //     strokeWidth,
+            //     fp64: false,
+            //     getSourcePosition: d => d.start,
+            //     getTargetPosition: d => d.end,
+            //     getColor,
+            //     pickable: Boolean(this.props.onHover),
+            //     onHover: this.props.onHover
+            // })
+            new GeoJsonLayer({
+                id: 'geojson',
+                data: polydata,
+                opacity: 1,
+                stroked: false,
+                filled: true,
+                extruded: true,
+                wireframe: true,
+                fp64: true,
+                getElevation: f => 0,
+                getFillColor: f => {
+                    if (f.properties.type == "positive") {
+                        return [0, 0, 255]
+                    } else if (f.properties.type == "neutral") {
+                        return [255, 255, 255]
+                    } else {
+                        return [255, 0, 0]
+                    }
+                },
+                getLineColor: f => [255, 255, 255],
+                lightSettings: LIGHT_SETTINGS,
+                pickable: Boolean(this.props.onHover),
+                onHover: this.props.onHover
             })
         ];
 

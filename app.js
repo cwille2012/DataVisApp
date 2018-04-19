@@ -6,10 +6,12 @@ import DeckGLOverlay from './deckgl-overlay.js';
 
 import { csv as requestCsv } from 'd3-request';
 
-//const serverURL = 'http://localhost';
-//const serverPORT = 9600;
-const serverURL = 'http://ec2-13-58-224-41.us-east-2.compute.amazonaws.com';
-const serverPORT = 3000;
+const serverURL = 'http://localhost';
+const serverPORT = 9600;
+//const serverURL = 'ec2-13-59-202-52.us-east-2.compute.amazonaws.com';
+//const serverPORT = 3000;
+
+const DATA_URL = serverURL + ':' + serverPORT
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiY3dpbGxlMjAxMiIsImEiOiJjajJxdWJyeXEwMDE5MzNydXF2cm1sbDU1In0.kCKIz6Ivh3EfNOmEfTANOA';
 
@@ -22,7 +24,8 @@ class Root extends Component {
                 width: 500,
                 height: 500
             },
-            data: null
+            data: null,
+            polydata: null
         };
         var _this = this;
 
@@ -56,17 +59,48 @@ class Root extends Component {
         pollFunc(getData, 45000, 7000);
 
         function getData() {
-            //console.log('Updating data');
             var address = serverURL + ':' + serverPORT;
+
+            console.log("Show user locations: " + document.getElementById("showUserLocations").checked);
+
+            if (document.getElementById("showUserLocations").checked) {
+
+            }
+
+
             httpGetAsync(address + '/locationdata', function(response) {
                 var newData = JSON.parse(response);
-                const newResponse = newData.map(d => [Number(d.long), Number(d.lat)]);
-                //console.log("New dataset:");
-                console.log(newResponse);
-                const data = newResponse;
+                //const newResponse = newData.map(d => [Number(d.long), Number(d.lat)]);
+                const newResponse = newData.map(d => {
+                    var minutes = d.duration / 60;
+                    var coordinates = [];
+                    for (var i = 0; i < minutes; i++) {
+                        coordinates.push([Number(d.long), Number(d.lat)]);
+                    }
+                    return coordinates
+                });
+                var coordinates = [];
+                for (var j in newResponse) {
+                    coordinates = coordinates.concat(newResponse[j]);
+                }
+                console.log(coordinates);
+                const data = coordinates;
 
                 _this.setState({ data });
             });
+
+            console.log("Show saved locations: " + document.getElementById("showLocations").checked);
+
+            if (document.getElementById("showLocations").checked) {
+                httpGetAsync(address + '/locations', function(response) {
+                    var newData = JSON.parse(response);
+                    console.log(newData);
+                    const data = newData;
+                    _this.setState({ polydata: data });
+                });
+            } else {
+                _this.setState({ polydata: [] });
+            }
         }
     }
 
@@ -129,26 +163,40 @@ class Root extends Component {
             document.getElementById('tooltip').style.top = myy + 'px';
             document.getElementById('tooltip').style.cursor = 'pointer';
             document.getElementById('tooltip').setAttribute('text-decoration', 'none!important');
-            //console.log(hoveredObject);
-            //codeLatLng(hoveredObject.centroid[1], hoveredObject.centroid[0]);
         }
 
-        return ( < div id = "tooltip"
-            style = {
-                { left: myx, top: myy }
-            } >
-            <
-            div > { 'Speed: ' + hoveredObject.points.length + ' mph' } < /div> <
-            div > { 'Longitude: ' + hoveredObject.centroid[0] } < /div> <
-            div > { 'Latitude: ' + hoveredObject.centroid[1] } < /div> <
-            div > { 'Index: ' + hoveredObject.index } < /div>  < /
-            div >
-        );
+        //console.log(hoveredObject);
+
+        if (hoveredObject.hasOwnProperty("centroid")) {
+            return ( < div id = "tooltip"
+                style = {
+                    { left: myx, top: myy }
+                } >
+                <
+                div > { 'Time: ' + hoveredObject.points.length + ' mins' } < /div> <
+                div > { 'Longitude: ' + hoveredObject.centroid[0] } < /div> <
+                div > { 'Latitude: ' + hoveredObject.centroid[1] } < /div> <
+                div > { 'Index: ' + hoveredObject.index } < /div>  < /
+                div >
+            );
+        } else if (hoveredObject.type == "Feature") {
+            return ( < div id = "tooltip"
+                style = {
+                    { left: myx, top: myy }
+                } >
+                <
+                div > { 'Location: ' + hoveredObject.properties.name } < /div> <
+                div > { 'Type: ' + hoveredObject.properties.type } < /div> <
+                div > { 'Coordinates: ' + hoveredObject.properties.center[0] + ', ' + hoveredObject.properties.center[1] } < /div>  < /
+                div >
+            );
+        }
+
     }
 
 
     render() {
-        const { viewport, data, iconMapping, mousePosition, mouseEntered } = this.state;
+        const { viewport, data, iconMapping, mousePosition, mouseEntered, polydata } = this.state;
 
         return ( <
             div onMouseMove = { this._onMouseMove.bind(this) }
@@ -161,6 +209,7 @@ class Root extends Component {
             <
             DeckGLOverlay viewport = { viewport }
             data = { data || [] }
+            polydata = { polydata || [] }
             mousePosition = { mousePosition }
             mouseEntered = { mouseEntered }
             onHover = { this._onHover.bind(this) }

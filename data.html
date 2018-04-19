@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Location Dashboard - Data</title>
+    <link rel="stylesheet" href="/headers.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="headers.js"></script>
+</head>
+
+<body onload="loadData()" style="overflow: scroll !important;">
+    <div class="header" id="header-container">
+        <div class="header-left" onclick="linksCall()"><i class="fa fa-bars"></i></div>
+        <div class="header-center">Location Based Motivation</div>
+        <div class="header-right" onclick="settingsCall()"><i class="fa fa-gear"></i></div>
+    </div>
+    <div class="settings-header" id="settings">
+
+    </div>
+    <div class="links-header" id="links">
+        <a class="header-link" href="/">Map</a>
+        <a class="header-link" href="/userlocations">Locations</a>
+        <a class="header-link" href="/goals">Goals</a>
+        <a class="header-link active" href="/data">Raw Data</a>
+        <a class="header-link" href="/location-setup">Location Setup</a>
+    </div>
+    <div style="width: 100%; height: 100%; padding: 20px; padding-top: 30px; padding-bottom: 40px;">
+        <h2 style="text-align: center;">Raw Data</h2>
+        <h3 style="text-align: center;">Saved Locations</h3>
+        <div id="savedLocations">
+            <table id="savedLocationsTable" width="100%" cellspacing="0" style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Location</th>
+                        <th>Type</th>
+                        <th>Duration</th>
+                        <th>Goal (minutes)</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                        <th>Boundries</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="savedLocationsTableBody">
+                </tbody>
+            </table>
+        </div>
+        <h3 style="text-align: center;">User Locations</h3>
+        <div id="userLocations">
+            <table id="userLocationsTable" width="100%" cellspacing="0" style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Location</th>
+                        <th>Duration</th>
+                        <th>Latitude</th>
+                        <th>Longitude</th>
+                    </tr>
+                </thead>
+                <tbody id="userLocationsTableBody">
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <div class=footer>
+        <div>Copyright © 2018 Christopher Wille</div>
+    </div>
+</body>
+<script>
+    function httpGetAsync(theUrl, callback) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function() {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                callback(xmlHttp.responseText);
+        }
+        xmlHttp.open("GET", theUrl, true);
+        xmlHttp.send(null);
+    }
+
+    function round(value, decimals) {
+        return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+    }
+
+    var locationsAddress = window.location.href.replace(/data/g, "locations");
+    var userLocationsAddress = window.location.href.replace(/data/g, "locationdata");
+    var locationsData;
+    var userLocationsData;
+
+    function loadData() {
+        if (!!document.getElementById('savedLocations')) {
+            httpGetAsync(locationsAddress, function(locationsData) {
+                locationsData = JSON.parse(locationsData);
+                console.log(locationsData);
+                for (var i in locationsData.features) {
+                    var locationID = locationsData.features[i]._id;
+                    var name = locationsData.features[i].properties.name;
+                    var type = locationsData.features[i].properties.type;
+                    var duration = Math.round(locationsData.features[i].properties.duration);
+                    var goal = Math.round(locationsData.features[i].properties.goal);
+                    var c0 = Number(round((locationsData.features[i].properties.center[0]), 5));
+                    var c1 = Number(round((locationsData.features[i].properties.center[1]), 5));
+                    var p00 = Number(round((locationsData.features[i].geometry.coordinates[0][0][0]), 4));
+                    var p01 = Number(round((locationsData.features[i].geometry.coordinates[0][0][1]), 4));
+                    var p10 = Number(round((locationsData.features[i].geometry.coordinates[0][1][0]), 4));
+                    var p11 = Number(round((locationsData.features[i].geometry.coordinates[0][1][1]), 4));
+                    var p20 = Number(round((locationsData.features[i].geometry.coordinates[0][2][0]), 4));
+                    var p21 = Number(round((locationsData.features[i].geometry.coordinates[0][2][1]), 4));
+                    var p30 = Number(round((locationsData.features[i].geometry.coordinates[0][3][0]), 4));
+                    var p31 = Number(round((locationsData.features[i].geometry.coordinates[0][3][1]), 4));
+                    var centroid = "[" + c0 + ", " + c1 + "]";
+                    var p0 = "[" + p00 + ", " + p01 + "]";
+                    var p1 = "[" + p10 + ", " + p11 + "]";
+                    var p2 = "[" + p20 + ", " + p21 + "]";
+                    var p3 = "[" + p30 + ", " + p31 + "]";
+
+                    var tr = document.createElement("tr");
+
+                    var td0 = document.createElement("td");
+                    var text0 = document.createTextNode(name);
+                    td0.appendChild(text0);
+                    td0.setAttribute("id", locationID + '-name');
+                    td0.addEventListener('click', function(event) {
+                        var $this = $(this);
+                        var listenID = String(event.target.id);
+                        listenID = listenID.split('-');
+                        listenID = listenID[0];
+                        var $input = $('<input>', {
+                            value: $this.text(),
+                            type: 'text',
+                            id: String(listenID + '-name'),
+                            blur: function() {
+                                $this.text(this.value);
+                            },
+                            keyup: function(e) {
+                                if (e.which === 13) $input.blur();
+                            }
+                        }).appendTo($this.empty()).focus();
+                    });
+                    tr.appendChild(td0);
+
+                    var td1 = document.createElement("td");
+                    var text1 = document.createTextNode(type);
+                    td1.appendChild(text1);
+                    td1.setAttribute("id", locationID + '-type');
+                    td1.addEventListener('click', function(event) {
+                        var $this = $(this);
+                        var listenID = String(event.target.id);
+                        listenID = listenID.split('-');
+                        listenID = listenID[0];
+                        var $input = $('<input>', {
+                            value: $this.text(),
+                            type: 'text',
+                            id: String(listenID + '-type'),
+                            blur: function() {
+                                $this.text(this.value);
+                            },
+                            keyup: function(e) {
+                                if (e.which === 13) $input.blur();
+                            }
+                        }).appendTo($this.empty()).focus();
+                    });
+                    tr.appendChild(td1);
+
+                    var td2 = document.createElement("td");
+                    var text2 = document.createTextNode(duration + " minutes");
+                    td2.appendChild(text2);
+                    tr.appendChild(td2);
+
+                    var td3 = document.createElement("td");
+                    var text3 = document.createTextNode(goal);
+                    td3.appendChild(text3);
+                    td3.setAttribute("id", locationID + '-goal');
+                    td3.addEventListener('click', function(event) {
+                        var $this = $(this);
+                        var listenID = String(event.target.id);
+                        listenID = listenID.split('-');
+                        listenID = listenID[0];
+                        var $input = $('<input>', {
+                            value: $this.text(),
+                            type: 'text',
+                            id: String(listenID + '-goal'),
+                            blur: function() {
+                                $this.text(this.value);
+                            },
+                            keyup: function(e) {
+                                if (e.which === 13) $input.blur();
+                            }
+                        }).appendTo($this.empty()).focus();
+                    });
+                    tr.appendChild(td3);
+
+                    var td4 = document.createElement("td");
+                    var text4 = document.createTextNode(c0);
+                    td4.appendChild(text4);
+                    tr.appendChild(td4);
+
+                    var td5 = document.createElement("td");
+                    var text44 = document.createTextNode(c1);
+                    td5.appendChild(text44);
+                    tr.appendChild(td5);
+
+                    var td6 = document.createElement("td");
+                    var text5 = document.createTextNode(p0);
+                    var br1 = document.createElement("br");
+                    var text6 = document.createTextNode(p1);
+                    var br2 = document.createElement("br");
+                    var text7 = document.createTextNode(p2);
+                    var br3 = document.createElement("br");
+                    var text8 = document.createTextNode(p3);
+                    td6.appendChild(text5);
+                    td6.appendChild(br1);
+                    td6.appendChild(text6);
+                    td6.appendChild(br2);
+                    td6.appendChild(text7);
+                    td6.appendChild(br3);
+                    td6.appendChild(text8);
+                    tr.appendChild(td6);
+
+                    var td7 = document.createElement("td");
+                    var removeLocationButton = document.createElement("button");
+                    removeLocationButton.setAttribute("type", "button");
+                    removeLocationButton.setAttribute("id", locationID);
+                    var removeText = document.createTextNode("Remove Location");
+                    removeLocationButton.appendChild(removeText);
+                    removeLocationButton.addEventListener('click', function(event) {
+                        var id = String(event.target.id);
+
+                        var postData = new Object({
+                            "command": "remove",
+                            "id": id
+                        });
+
+                        var url = window.location.href.replace(/data/g, "locations-command");
+                        var method = "POST";
+
+                        var shouldBeAsync = true;
+                        var request = new XMLHttpRequest();
+
+                        request.onload = function() {
+                            var status = request.status;
+                            var data = request.responseText;
+                            console.log('status:' + status + ':' + data);
+                            if (status == 200) {
+                                console.log("removed locaion successfully");
+                                console.log(data);
+                            } else {
+                                console.log("removing location failed");
+                                console.log(data);
+                            }
+                        }
+                        request.open(method, url, shouldBeAsync);
+                        request.setRequestHeader("Content-Type", "application/json");
+                        request.send(JSON.stringify(postData));
+
+                        document.getElementById('userLocationsTableBody').innerHTML = '';
+                        document.getElementById('savedLocationsTableBody').innerHTML = '';
+                        loadData();
+                    });
+
+                    var editLocationButton = document.createElement("button");
+                    editLocationButton.setAttribute("type", "button");
+                    editLocationButton.setAttribute("id", locationID);
+                    var editText = document.createTextNode("Update Location");
+                    editLocationButton.appendChild(editText);
+                    editLocationButton.addEventListener('click', function(event) {
+                        var id = String(event.target.id);
+
+                        var postData = new Object({
+                            "command": "edit",
+                            "id": id,
+                            "name": document.getElementById(id + '-name').innerHTML,
+                            "type": document.getElementById(id + '-type').innerHTML,
+                            "goal": document.getElementById(id + '-goal').innerHTML
+                        });
+
+                        console.log(postData);
+
+                        var url = window.location.href.replace(/data/g, "locations-command");
+                        var method = "POST";
+
+                        var shouldBeAsync = true;
+                        var request = new XMLHttpRequest();
+
+                        request.onload = function() {
+                            var status = request.status;
+                            var data = request.responseText;
+                            console.log('status:' + status + ':' + data);
+                            if (status == 200) {
+                                console.log("location updated successfully");
+                                console.log(data);
+                            } else {
+                                console.log("updating location failed");
+                                console.log(data);
+                            }
+                        }
+                        request.open(method, url, shouldBeAsync);
+                        request.setRequestHeader("Content-Type", "application/json");
+                        request.send(JSON.stringify(postData));
+
+                        document.getElementById('userLocationsTableBody').innerHTML = '';
+                        document.getElementById('savedLocationsTableBody').innerHTML = '';
+                        loadData();
+                    });
+                    td7.appendChild(removeLocationButton);
+                    var br4 = document.createElement("br");
+                    td7.appendChild(br4);
+                    td7.appendChild(editLocationButton);
+                    tr.appendChild(td7);
+
+                    document.getElementById('savedLocationsTableBody').appendChild(tr);
+                }
+            });
+        }
+        if (!!document.getElementById('userLocations')) {
+            httpGetAsync(userLocationsAddress, function(userLocationsData) {
+                userLocationsData = JSON.parse(userLocationsData);
+                console.log(userLocationsData);
+
+                for (var i in userLocationsData) {
+                    var date = userLocationsData[i].date;
+                    var time = userLocationsData[i].time;
+                    var name = userLocationsData[i].name;
+                    var duration = Math.round(userLocationsData[i].duration);
+                    var lat = userLocationsData[i].lat;
+                    var long = userLocationsData[i].long;
+
+                    var tr = document.createElement("tr");
+
+                    var td0 = document.createElement("td");
+                    var text0 = document.createTextNode(date);
+                    td0.appendChild(text0);
+                    tr.appendChild(td0);
+
+                    var td1 = document.createElement("td");
+                    var text1 = document.createTextNode(time);
+                    td1.appendChild(text1);
+                    tr.appendChild(td1);
+
+                    var td2 = document.createElement("td");
+                    var text2 = document.createTextNode(name);
+                    td2.appendChild(text2);
+                    tr.appendChild(td2);
+
+                    var td3 = document.createElement("td");
+                    var text3 = document.createTextNode(duration + " seconds");
+                    td3.appendChild(text3);
+                    tr.appendChild(td3);
+
+                    var td4 = document.createElement("td");
+                    var text4 = document.createTextNode(lat);
+                    td4.appendChild(text4);
+                    tr.appendChild(td4);
+
+                    var td5 = document.createElement("td");
+                    var text5 = document.createTextNode(long);
+                    td5.appendChild(text5);
+                    tr.appendChild(td5);
+
+                    document.getElementById('userLocationsTableBody').appendChild(tr);
+                }
+
+            });
+        }
+    }
+</script>
+
+</html>
