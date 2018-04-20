@@ -8,7 +8,7 @@ import { csv as requestCsv } from 'd3-request';
 
 //const serverURL = 'http://localhost';
 const serverPORT = 9600;
-const serverURL = 'ec2-13-58-224-41.us-east-2.compute.amazonaws.com';
+const serverURL = 'http://ec2-13-58-224-41.us-east-2.compute.amazonaws.com';
 //const serverPORT = 3000;
 
 const DATA_URL = serverURL + ':' + serverPORT
